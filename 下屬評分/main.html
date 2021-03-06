@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<script type="text/javascript" src="js/jquery.min.js"></script>
+	<script type="text/javascript" src="js/bootstrap.min.js"></script>
+	<script type="text/javascript" src="js/fdb-all.min.js"></script>
+	<link href="css/bootstrap.css" rel="stylesheet">
+	<link rel="stylesheet" type="text/css" href="css/style.css">
+	<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+	<title>評分表</title>
+</head>
+<body>
+	<h1>評分表</h1>
+	<table class="table table-bordered">
+		<thead>
+			<tr>
+				<td>名字</td>
+				<td>評分</td>
+			</tr>
+		</thead>
+		<tbody id="tbody">
+		</tbody>
+	</table>
+	<button class="btn btn-primary" data-toggle="modal" data-target="#myModal2">刪除</button>
+	<button class="btn btn-primary" data-toggle="modal" data-target="#myModal3">重置</button>
+	<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+					<h2 class="modal-title" id="myModalLabel">Name Here</h2>
+				</div>
+				<div class="modal-body" id="stats">
+					Stats Here
+				</div>
+				<div class="modal-footer" id="total">
+					Total Here
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="modal fade" id="myModal2" tabindex="-1" role="dialog" aria-labelledby="myModalLabel2">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+					<h2 class="modal-title" id="myModalLabel2">刪除</h2>
+				</div>
+				<div class="modal-body">
+					名字：<select id="selectname"></select>
+					<br>
+					日期：<input type="date" id="inputdate">
+					<br>
+					事情：<select id="selectevent"></select>
+				</div>
+				<div class="modal-footer">
+					<button class="btn btn-default" data-dismiss="modal" aria-label="Close">取消</button>
+					<button class="btn btn-primary" data-dismiss="modal" aria-label="Close" id="delete">刪除</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="modal fade" id="myModal3" tabindex="-1" role="dialog" aria-labelledby="myModalLabel3">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+					<h2 class="modal-title" id="myModalLabel3">重置</h2>
+				</div>
+				<div class="modal-footer">
+					<button class="btn btn-default" data-dismiss="modal" aria-label="Close">取消</button>
+					<button class="btn btn-danger" data-dismiss="modal" aria-label="Close" id="reset">重置</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script type="text/javascript">
+		var fdb = new ForerunnerDB();
+		var db = fdb.db("mydb");
+		var aCollection = db.collection('a');
+		aCollection.load();
+		var namelist=["蔡正賢","李詩益","翁文松","李惠媛","黃郁涵","李嘉凌","李東穎","吳易企","李東峻","郭富美","林萍如","吳宛珊","阮郁芬","陳清松","陳心窈","陳宜均","吳苑琦","林筱萱","吳承臻","楊佳益","黃怡寧","陳亞芬","鄭惠文","鍾佳璉","備用1","備用2","備用3"];//Data
+		var eventlist=["早退遲到","任務延宕"," 其他(-) ","完成任務","發表文章","幫助他人","擁有證照"," 其他(+) "];//Data
+		var eventvallist=["earlylate","overdue","others-","finish","article","help","licence","others+"];//Data
+		var dictionary={"earlylate":"早退遲到","overdue":"任務延宕","others-":" 其他(-) ","finish":"完成任務","article":"發表文章","help":"幫助他人","licence":"擁有證照","others+":" 其他(+) "};//Data
+		setTimeout(start,100);
+		$("#selectname").click(function(){
+			$("#selectname option").remove();
+			$("#selectname").append("<option value=\"nan\"></option>");
+			var i=0;
+			while(i<namelist.length){
+				$("#selectname").append("<option value=\""+namelist[i]+"\">"+namelist[i]+"</option>");
+				i++;
+			}
+		});
+		$("#selectevent").click(function(){
+			$("#selectevent option").remove();
+			$("#selectevent").append("<option value=\"nan\"></option>");
+			var i=0;
+			while(i<eventlist.length){
+				$("#selectevent").append("<option value=\""+eventvallist[i]+"\">"+eventlist[i]+"</option>");
+				i++;
+			}
+		});
+		$("#delete").click(function(){
+			var person=aCollection.find({
+				name:$("#selectname").val()
+			})[0];
+			var monthdate=$("#inputdate").val().split("-").splice(1);
+			if(monthdate[0][0]=="0"){
+				monthdate[0]=monthdate[0].slice(1);
+			}
+			if(monthdate[1][0]=="0"){
+				monthdate[1]=monthdate[1].slice(1);
+			}
+			monthdate=monthdate[0]+"/"+monthdate[1];
+			var theevent=monthdate+" : "+dictionary[$("#selectevent").val()];
+			if(person.event.includes(theevent)==true){
+				if($("#selectevent").val()=="earlylate"||$("#selectevent").val()=="overdue"||$("#selectevent").val()=="others-"){//Data
+					aCollection.updateById(person._id,{
+						point:person.point+1
+					});
+				}
+				if($("#selectevent").val()=="finish"||$("#selectevent").val()=="article"||$("#selectevent").val()=="help"||$("#selectevent").val()=="licence"||$("#selectevent").val()=="others+"){//Data
+					aCollection.updateById(person._id,{
+						point:person.point-1
+					});
+				}
+				aCollection.updateById(person._id,{
+					event:person.event.slice(0,person.event.indexOf(theevent))+person.event.slice(person.event.indexOf(theevent)+theevent.length)
+				});
+			}
+			aCollection.save();
+			$("#selectname").val("nan");
+			$("#selectevent").val("nan");
+			$("#inputdate").val("");
+		});
+		$("#reset").click(function(){
+			$("#tbody tr").remove();
+			aCollection.remove();
+			var i=0;
+			while(i<namelist.length){
+				var person={
+					name:namelist[i],
+					tdid:"td"+i,
+					selectid:"select"+i,
+					buttonid:"button"+i,
+					point:0,
+					event:""
+				};
+				aCollection.insert(person);
+				aCollection.save();
+				i++;
+			}
+			setTimeout(start,100);
+		});
+		function start(){
+			var i=0;
+			while(i<namelist.length){
+				var person=aCollection.find({
+					tdid:"td"+i,
+					selectid:"select"+i,
+					buttonid:"button"+i
+				})[0];
+				$("#tbody").append(createtr(person.name,person.tdid,person.selectid,person.buttonid));
+				$("#button"+String(i)).click(function(){
+					var temp=Number(this.id.slice(6));
+					button(temp);
+				});
+				$("#td"+String(i)).click(function(){
+					var temp=Number(this.id.slice(2));
+					td(temp);
+				});
+				i++;
+			}
+			function button(i){
+				var person=aCollection.find({
+					tdid:"td"+i,
+					selectid:"select"+i,
+					buttonid:"button"+i
+				})[0];
+				if($("#select"+i).val()=="earlylate"||$("#select"+i).val()=="overdue"||$("#select"+i).val()=="others-"){//Data
+					aCollection.updateById(person._id,{
+						point:person.point-1
+					});
+				}
+				if($("#select"+i).val()=="finish"||$("#select"+i).val()=="article"||$("#select"+i).val()=="help"||$("#select"+i).val()=="licence"||$("#select"+i).val()=="others+"){//Data
+					aCollection.updateById(person._id,{
+						point:person.point+1
+					});
+				}
+				var d=new Date();
+				aCollection.updateById(person._id,{
+					event:person.event+(d.getMonth()+1)+"/"+d.getDate()+" : "+dictionary[$("#select"+i).val()]
+				});
+				aCollection.save();
+				$("#select"+i).val("nan");
+			}
+			function td(i){
+				var person=aCollection.find({
+					tdid:"td"+i,
+					selectid:"select"+i,
+					buttonid:"button"+i
+				})[0];
+				$("#myModalLabel").text(person.name);
+				$("#stats").text(person.event);
+				$("#total").text(person.point);
+			}
+			function createtr(name,tdid,selectid,buttonid){
+				return "<tr><td data-toggle=\"modal\" data-target=\"#myModal\" id=\""+tdid+"\">"+name+"</td><td><select class=\"select\" id=\""+selectid+"\"><option value=\"nan\"></option><option value=\"earlylate\">早退遲到</option><option value=\"overdue\">任務延宕</option><option value=\"others-\">其他(-)</option><option value=\"finish\">完成任務</option><option value=\"article\">發表文章</option><option value=\"help\">幫助他人</option><option value=\"licence\">擁有證照</option><option value=\"others+\">其他(+)</option></select><button class=\"btn btn-primary\" id=\""+buttonid+"\">確認</button></td></tr>"//Data
+			}
+		}
+	</script>
+</body>
+</html>
