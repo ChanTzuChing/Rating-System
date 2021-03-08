@@ -1,6 +1,6 @@
-## Rating-System
+# Rating-System
 A simple system that may record the rating of subordinates
-# Functions
+## Functions
 * View rating history
 * Commit changes
 * Delete changes
